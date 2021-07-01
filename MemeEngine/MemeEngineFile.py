@@ -20,8 +20,6 @@ class MemeEngine:
         d1.text((50, 50), text, fill=(25, 200, 255), font=font)
         d2 = ImageDraw.Draw(im)
         d2.text((100, 100), f"--{author}", fill=(2, 255, 255), font=font)
-        im.show()
-
         out_path = os.path.join(self.folder_path, os.path.basename(img_path))
         im.save(out_path)
         return out_path
