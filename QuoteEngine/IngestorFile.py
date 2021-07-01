@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
 import csv
 from docx import Document
-import os
-from typing import List
-from QuoteEngine.QuoteModelFile import QuoteModel
 from io import StringIO
+import os
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
+from QuoteEngine.QuoteModelFile import QuoteModel
+from typing import List
 
 
 def convert_pdf_to_string(file_path):
