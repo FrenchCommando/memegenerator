@@ -4,6 +4,26 @@ from docx import Document
 import os
 from typing import List
 from QuoteEngine.QuoteModelFile import QuoteModel
+from io import StringIO
+from pdfminer.converter import TextConverter
+from pdfminer.layout import LAParams
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfparser import PDFParser
+
+
+def convert_pdf_to_string(file_path):
+    output_string = StringIO()
+    with open(file_path, 'rb') as in_file:
+        parser = PDFParser(in_file)
+        doc = PDFDocument(parser)
+        rsrcmgr = PDFResourceManager()
+        device = TextConverter(rsrcmgr, output_string, laparams=LAParams())
+        interpreter = PDFPageInterpreter(rsrcmgr, device)
+        for page in PDFPage.create_pages(doc):
+            interpreter.process_page(page)
+    return output_string.getvalue()
 
 
 class IngestorInterface(ABC):
@@ -42,7 +62,9 @@ class IngestorTxt(IngestorInterface):
     def parse(path: str) -> List[QuoteModel]:
         with open(path, mode='r') as input_file:
             reader = input_file.readlines()
-            return [QuoteModel(*map(lambda r: r.strip(), row.split("-"))) for row in reader]
+            return [QuoteModel(*map(lambda r: r.strip(),
+                                    row.encode('ascii', 'ignore').decode().split("-")))
+                    for row in reader]
 
 
 class IngestorDocx(IngestorInterface):
@@ -58,10 +80,26 @@ class IngestorDocx(IngestorInterface):
                 for para in document.paragraphs if para.text]
 
 
+class IngestorPdf(IngestorInterface):
+    @staticmethod
+    def can_ingest(path: str) -> bool:
+        extension = os.path.splitext(path)[1]
+        return extension == ".pdf"
+
+    @staticmethod
+    def parse(path: str) -> List[QuoteModel]:
+        quote_list = []
+        text = convert_pdf_to_string(file_path=path)
+        quote_list.extend([QuoteModel(*map(lambda r: r.strip().strip('\"'), line.split("-")))
+                           for line in text.split("\n") if line.strip().encode('ascii', 'ignore').decode()])
+        return quote_list
+
+
 class Ingestor:
     extension_mapping = {
         '.csv': IngestorCsv,
         '.docx': IngestorDocx,
+        '.pdf': IngestorPdf,
         '.txt': IngestorTxt,
     }
 
@@ -69,7 +107,6 @@ class Ingestor:
     def parse(path: str) -> List[QuoteModel]:
         extension = os.path.splitext(path)[1]
         if extension not in Ingestor.extension_mapping:
-            return []
             raise ValueError(f"Ingestor: Extension not supported for extension {extension}, file: {path}")
         ingestor = Ingestor.extension_mapping[extension]
         if ingestor.can_ingest(path=path):  # allows to check more than extension type

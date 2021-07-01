@@ -1,3 +1,4 @@
 docx
 flask
+pdfminer.six
 requests
