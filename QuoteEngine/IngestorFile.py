@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+import csv
 import os
 from typing import List
-from QuoteModelFile import QuoteModel
+from QuoteEngine.QuoteModelFile import QuoteModel
 
 
 class IngestorInterface(ABC):
@@ -25,7 +26,9 @@ class IngestorCsv(IngestorInterface):
 
     @staticmethod
     def parse(path: str) -> List[QuoteModel]:
-        pass
+        with open(path, mode='r') as input_file:
+            reader = csv.DictReader(input_file)
+            return [QuoteModel(**row) for row in reader]
 
 
 class Ingestor:
@@ -37,6 +40,7 @@ class Ingestor:
     def parse(path: str) -> List[QuoteModel]:
         extension = os.path.splitext(path)[1]
         if extension not in Ingestor.extension_mapping:
+            return []
             raise ValueError(f"Ingestor: Extension not supported for extension {extension}, file: {path}")
         ingestor = Ingestor.extension_mapping[extension]
         if ingestor.can_ingest(path=path):  # allows to check more than extension type

@@ -29,6 +29,7 @@ def generate_meme(path=None, body=None, author=None):
         quotes = []
         for f in quote_files:
             quotes.extend(Ingestor.parse(f))
+            print(quotes)
 
         quote = random.choice(quotes)
     else:
@@ -47,4 +48,5 @@ if __name__ == "__main__":
     # body - quote body to add to the image
     # author - quote author to add to the image
     args = None
-    print(generate_meme(args.path, args.body, args.author))
+    generate_meme()
+    # print(generate_meme(args.path, args.body, args.author))
