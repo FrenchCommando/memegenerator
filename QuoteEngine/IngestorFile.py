@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import csv
+from docx import Document
 import os
 from typing import List
 from QuoteEngine.QuoteModelFile import QuoteModel
@@ -44,9 +45,23 @@ class IngestorTxt(IngestorInterface):
             return [QuoteModel(*map(lambda r: r.strip(), row.split("-"))) for row in reader]
 
 
+class IngestorDocx(IngestorInterface):
+    @staticmethod
+    def can_ingest(path: str) -> bool:
+        extension = os.path.splitext(path)[1]
+        return extension == ".docx"
+
+    @staticmethod
+    def parse(path: str) -> List[QuoteModel]:
+        document = Document(path)
+        return [QuoteModel(*map(lambda r: r.strip().strip('\"'), para.text.split("-")))
+                for para in document.paragraphs if para.text]
+
+
 class Ingestor:
     extension_mapping = {
         '.csv': IngestorCsv,
+        '.docx': IngestorDocx,
         '.txt': IngestorTxt,
     }
 
