@@ -31,9 +31,23 @@ class IngestorCsv(IngestorInterface):
             return [QuoteModel(**row) for row in reader]
 
 
+class IngestorTxt(IngestorInterface):
+    @staticmethod
+    def can_ingest(path: str) -> bool:
+        extension = os.path.splitext(path)[1]
+        return extension == ".txt"
+
+    @staticmethod
+    def parse(path: str) -> List[QuoteModel]:
+        with open(path, mode='r') as input_file:
+            reader = input_file.readlines()
+            return [QuoteModel(*map(lambda r: r.strip(), row.split("-"))) for row in reader]
+
+
 class Ingestor:
     extension_mapping = {
         '.csv': IngestorCsv,
+        '.txt': IngestorTxt,
     }
 
     @staticmethod
